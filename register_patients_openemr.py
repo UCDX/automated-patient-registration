@@ -8,6 +8,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.keys import Keys
 
 class Patient: 
     def __init__(self): 
@@ -19,7 +21,7 @@ class Patient:
 
 def format_patient_info(patient):
     p = Patient()
-    p.firstname = patient['Nombre']
+    p.firstname = patient['Nombre'] + '_qqqq'
     p.lastname = patient['Apellidos']
     p.rfc = patient['RFC']
     year_of_birth = p.rfc[4:6] # El RFC solo cuenta con los últimos 2 digitos del año de nacimiento.
@@ -33,10 +35,10 @@ def register_patient_openemr(driver, patient):
     time.sleep(2)
 
     # Click en Patient.
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[5]/div"))).click()
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div"))).click()
     time.sleep(1)
     # Click en New/Search.
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[5]/div/ul/li[1]/div"))).click()    
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div/ul/li[1]/div"))).click()    
     time.sleep(3) 
 
     # Entramos al Iframe de la ultima pestaña abierta (3ra): Search or Add patient.
@@ -64,6 +66,12 @@ def register_patient_openemr(driver, patient):
     time.sleep(3) 
     # Click al boton Confirm Create New Patient.
     WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='searchResultsHeader']/center/input"))).click()
+    time.sleep(3)
+    try:
+        alert = Alert(driver)
+        alert.send_keys(Keys.RETURN)
+    except:
+        pass
     # Salimos del iframe de la ventana modal.
     driver.switch_to.default_content()
     time.sleep(3)
@@ -84,10 +92,10 @@ def main():
 
         # Se inicia sesión con la cuenta del recepcionista.
         login_box = driver.find_element(By.ID, 'authUser')
-        login_box.send_keys('receptionist')
+        login_box.send_keys('physician')
         time.sleep(1) 
         login_box = driver.find_element(By.ID, 'clearPass')
-        login_box.send_keys('receptionist')
+        login_box.send_keys('physician')
         time.sleep(1) 
         select_language = Select(driver.find_element(By.CSS_SELECTOR, 'select[name=languageChoice]'))
         select_language.select_by_value('1') # Value '1' = English (Standard)
@@ -95,16 +103,16 @@ def main():
         login_box.submit()
 
         for index in random.sample(range(1, len(patients)), patients_to_register):
-            # print(index)
+            print(index)
             patient = format_patient_info(patients.loc[index])
             register_patient_openemr(driver, patient)
 
         # Despues de registrar a los pacientes, se abre la lista de todos los pacientes.
         # Click en Patient.
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[5]/div"))).click()
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div"))).click()
         time.sleep(1)
         # Click en New/Search.
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[5]/div/ul/li[1]/div"))).click()    
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div/ul/li[1]/div"))).click()    
         time.sleep(3) 
         # Entramos al Iframe de la ultima pestaña abierta (3ra): Search or Add patient.
         WebDriverWait(driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='framesDisplay']/div[3]/iframe")))
