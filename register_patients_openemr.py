@@ -45,11 +45,11 @@ def format_patient_info(patient):
     return p
 
 def register_patient_openemr(driver, patient):
-    time.sleep(2)
+    time.sleep(3)
 
     # Click en Patient.
     WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div"))).click()
-    time.sleep(1)
+    time.sleep(3)
     # Click en New/Search.
     WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div/ul/li[1]/div"))).click()    
     time.sleep(3) 
@@ -60,12 +60,16 @@ def register_patient_openemr(driver, patient):
     # Se escriben los datos del paciente.
     register_patient_box = driver.find_element(By.ID, 'form_fname')
     register_patient_box.send_keys(patient.firstname)
+    time.sleep(2)
     register_patient_box = driver.find_element(By.ID, 'form_lname')
     register_patient_box.send_keys(patient.lastname)
+    time.sleep(2)
     register_patient_box = driver.find_element(By.ID, 'form_pubpid')
     register_patient_box.send_keys(patient.rfc)
+    time.sleep(2)
     register_patient_box = driver.find_element(By.ID, 'form_DOB')
     register_patient_box.send_keys(patient.date_of_birth)
+    time.sleep(2)
     select_sex = Select(driver.find_element(By.ID, 'form_sex'))
     select_sex.select_by_value(patient.sex)
     time.sleep(3) 
@@ -92,7 +96,7 @@ def register_patient_openemr(driver, patient):
     
 def register_vitals_patient(driver, patient):
     # ------------------------- Registro de nuevo encuentro ------------------------
-    time.sleep(2)
+    time.sleep(3)
 
     # Click en el boton + para crear un nuevo encuentro con el paciente.
     WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='attendantData']/div/div[2]/div/a[2]"))).click()
@@ -104,7 +108,8 @@ def register_vitals_patient(driver, patient):
 
     # Seleccionamos el tipo de visita (campo requerido).
     select_vis_category = Select(driver.find_element(By.ID, 'pc_catid'))
-    select_vis_category.select_by_value('9') # Value '9' = Paciente regular. 
+    select_vis_category.select_by_value('9') # Value '9' = Paciente regular.
+    time.sleep(3) 
 
     # Click al boton Save.
     WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='new-encounter-form']/div/div/div/button[1]"))).click()
@@ -121,7 +126,7 @@ def register_vitals_patient(driver, patient):
     time.sleep(3)
 
     # Click a la opción Vitals para registrar los signos vitales.
-    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='navbarSupportedContent']/ul[1]/li[2]/div/a[12]"))).click()
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='navbarSupportedContent']/ul[1]/li[2]/div/a[11]"))).click()
     time.sleep(3)
 
     # Regresamos al html raiz.
@@ -140,16 +145,22 @@ def register_vitals_patient(driver, patient):
     # Se registran los signos vitales del paciente.
     register_vitals_box = driver.find_element(By.ID, 'weight_input_metric')
     register_vitals_box.send_keys(str(patient.weight))
+    time.sleep(2)
     register_vitals_box = driver.find_element(By.ID, 'height_input_metric')
     register_vitals_box.send_keys(str(patient.height))
+    time.sleep(2)
     register_vitals_box = driver.find_element(By.ID, 'bps_input')
     register_vitals_box.send_keys(str(patient.bp_systolic))
+    time.sleep(2)
     register_vitals_box = driver.find_element(By.ID, 'bpd_input')
     register_vitals_box.send_keys(str(patient.bp_diastolic))
+    time.sleep(2)
     register_vitals_box = driver.find_element(By.ID, 'pulse_input')
     register_vitals_box.send_keys(str(patient.pulse))
+    time.sleep(2)
     register_vitals_box = driver.find_element(By.ID, 'temperature_input_metric')
     register_vitals_box.send_keys(str(patient.temperature))
+    time.sleep(2)
     register_vitals_box = driver.find_element(By.ID, 'BMI_input')
     register_vitals_box.send_keys(str(patient.bmi))
     time.sleep(3) 
@@ -161,7 +172,9 @@ def register_vitals_patient(driver, patient):
     driver.switch_to.default_content()
 
 def main():
-    url='https://demo.openemr.io/openemr/interface/login/login.php?site=default'
+    # Nota: Se usa la demo b, para evitar que algunos XPATH no se encuentren en caso de que en 
+    # la demo original el admin configure apartados del sistema.
+    url='https://demo.openemr.io/b/openemr/interface/login/login.php?site=default'
     patients_to_register = 3
     user = 'physician'
     password_user = 'physician'
@@ -173,18 +186,18 @@ def main():
         driver.maximize_window()
         driver.get(url)
 
-        time.sleep(2) 
+        time.sleep(3) 
 
         # Se inicia sesión con la cuenta del recepcionista.
         login_box = driver.find_element(By.ID, 'authUser')
         login_box.send_keys(user)
-        time.sleep(1) 
+        time.sleep(2) 
         login_box = driver.find_element(By.ID, 'clearPass')
         login_box.send_keys(password_user)
-        time.sleep(1) 
+        time.sleep(2) 
         select_language = Select(driver.find_element(By.CSS_SELECTOR, 'select[name=languageChoice]'))
         select_language.select_by_value('1') # Value '1' = English (Standard)
-        time.sleep(1) 
+        time.sleep(2) 
         login_box.submit()
 
         for index in random.sample(range(1, len(patients)), patients_to_register):
