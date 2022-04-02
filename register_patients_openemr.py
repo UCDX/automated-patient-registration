@@ -17,17 +17,30 @@ class Patient:
         self.lastname = None
         self.rfc = None
         self.date_of_birth = None
-        self.sex = None
+        self.weight = None
+        self.height = None
+        self.bp_systolic = None
+        self.bp_diastolic = None
+        self.pulse = None
+        self.temperature = None
+        self.bmi = None
 
 def format_patient_info(patient):
     p = Patient()
-    p.firstname = patient['Nombre'] + '_qqqq'
+    p.firstname = patient['Nombre']
     p.lastname = patient['Apellidos']
     p.rfc = patient['RFC']
     year_of_birth = p.rfc[4:6] # El RFC solo cuenta con los últimos 2 digitos del año de nacimiento.
     year_of_birth = '20'+year_of_birth if int(year_of_birth) <= (date.today().year%100) else '19'+year_of_birth
     p.date_of_birth = f'{year_of_birth}-{p.rfc[6:8]}-{p.rfc[8:10]}'
     p.sex = 'Male' if patient['Sexo'] == 'hombre' else 'Female'
+    p.weight = patient['Peso[kg]']
+    p.height = patient['Estatura[cm]']
+    p.bp_systolic = int(patient['Presion[mmHg]'].split('/')[0])
+    p.bp_diastolic = int(patient['Presion[mmHg]'].split('/')[1])
+    p.pulse = patient['Pulso[bpm]']
+    p.temperature = patient['Temperatura[C]']
+    p.bmi = round(p.weight / (p.height/100)**2)
 
     return p
 
@@ -35,14 +48,14 @@ def register_patient_openemr(driver, patient):
     time.sleep(2)
 
     # Click en Patient.
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div"))).click()
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div"))).click()
     time.sleep(1)
     # Click en New/Search.
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div/ul/li[1]/div"))).click()    
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div/ul/li[1]/div"))).click()    
     time.sleep(3) 
 
-    # Entramos al Iframe de la ultima pestaña abierta (3ra): Search or Add patient.
-    WebDriverWait(driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='framesDisplay']/div[3]/iframe")))
+    # Entramos al Iframe de la pestaña: Search or Add patient.
+    WebDriverWait(driver, 30).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='framesDisplay']/div[3]/iframe")))
     time.sleep(3) 
     # Se escriben los datos del paciente.
     register_patient_box = driver.find_element(By.ID, 'form_fname')
@@ -57,29 +70,101 @@ def register_patient_openemr(driver, patient):
     select_sex.select_by_value(patient.sex)
     time.sleep(3) 
     # Click al boton Create New Patient.
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "create"))).click()
-    # Salimos del iframe: Search or Add patient.
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.ID, "create"))).click()
+    # Regresamos al html raiz.
     driver.switch_to.default_content()
 
     # Entramos al iframe de la ventana modal que se abre cuando se da click en crear a paciente.
-    WebDriverWait(driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "modalframe")))
+    WebDriverWait(driver, 30).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "modalframe")))
     time.sleep(3) 
     # Click al boton Confirm Create New Patient.
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='searchResultsHeader']/center/input"))).click()
-    time.sleep(3)
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='searchResultsHeader']/center/input"))).click()
+    # Se cierra la alerta desplegada despues que el medico registra al paciente.
+    WebDriverWait(driver, 30).until(EC.alert_is_present(), 'Timed out waiting alert after create patient')
     try:
-        alert = Alert(driver)
-        alert.send_keys(Keys.RETURN)
+        alert = driver.switch_to.alert
+        alert.accept()
     except:
         pass
-    # Salimos del iframe de la ventana modal.
+    # Regresamos al html raiz.
     driver.switch_to.default_content()
     time.sleep(3)
     
+def register_vitals_patient(driver, patient):
+    # ------------------------- Registro de nuevo encuentro ------------------------
+    time.sleep(2)
+
+    # Click en el boton + para crear un nuevo encuentro con el paciente.
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='attendantData']/div/div[2]/div/a[2]"))).click()
+    time.sleep(3)
+
+    # Entramos al Iframe de la cuarta pestaña actualizada: Patient Encounter.
+    WebDriverWait(driver, 30).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='framesDisplay']/div[4]/iframe")))
+    time.sleep(3) 
+
+    # Seleccionamos el tipo de visita (campo requerido).
+    select_vis_category = Select(driver.find_element(By.ID, 'pc_catid'))
+    select_vis_category.select_by_value('9') # Value '9' = Paciente regular. 
+
+    # Click al boton Save.
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='new-encounter-form']/div/div/div/button[1]"))).click()
+    time.sleep(3)
+
+    # ------------------------- Fin del registro de nuevo encuentro ------------------------
+
+    # Entramos al iframe subpestaña Summary (profundidad 3)
+    WebDriverWait(driver, 30).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='enctabs-1']/iframe")))
+    time.sleep(3) 
+
+    # Click a la opción Clinical (menú).
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.ID, "category_Clinical"))).click()
+    time.sleep(3)
+
+    # Click a la opción Vitals para registrar los signos vitales.
+    WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='navbarSupportedContent']/ul[1]/li[2]/div/a[12]"))).click()
+    time.sleep(3)
+
+    # Regresamos al html raiz.
+    driver.switch_to.default_content()
+
+    # -------------- Registro de signos vitales del paciente. -----------------------
+
+    # Entramos al Iframe de la cuarta pestaña: Encounter.
+    WebDriverWait(driver, 30).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='framesDisplay']/div[4]/iframe")))
+    time.sleep(3) 
+
+    # Entramos al iframe subpestaña Vitals (profundidad 3).
+    WebDriverWait(driver, 30).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='enctabs-1001']/iframe")))
+    time.sleep(3) 
+
+    # Se registran los signos vitales del paciente.
+    register_vitals_box = driver.find_element(By.ID, 'weight_input_metric')
+    register_vitals_box.send_keys(str(patient.weight))
+    register_vitals_box = driver.find_element(By.ID, 'height_input_metric')
+    register_vitals_box.send_keys(str(patient.height))
+    register_vitals_box = driver.find_element(By.ID, 'bps_input')
+    register_vitals_box.send_keys(str(patient.bp_systolic))
+    register_vitals_box = driver.find_element(By.ID, 'bpd_input')
+    register_vitals_box.send_keys(str(patient.bp_diastolic))
+    register_vitals_box = driver.find_element(By.ID, 'pulse_input')
+    register_vitals_box.send_keys(str(patient.pulse))
+    register_vitals_box = driver.find_element(By.ID, 'temperature_input_metric')
+    register_vitals_box.send_keys(str(patient.temperature))
+    register_vitals_box = driver.find_element(By.ID, 'BMI_input')
+    register_vitals_box.send_keys(str(patient.bmi))
+    time.sleep(3) 
+    register_vitals_box.submit()
+
+    # -------------- Fin de registro de signos vitales del paciente. -----------------------
+
+    # Regresamos al html raiz.
+    driver.switch_to.default_content()
 
 def main():
     url='https://demo.openemr.io/openemr/interface/login/login.php?site=default'
     patients_to_register = 3
+    user = 'physician'
+    password_user = 'physician'
     patients = pd.read_csv('random_patients.csv', encoding='latin-1')
 
     try:
@@ -92,10 +177,10 @@ def main():
 
         # Se inicia sesión con la cuenta del recepcionista.
         login_box = driver.find_element(By.ID, 'authUser')
-        login_box.send_keys('physician')
+        login_box.send_keys(user)
         time.sleep(1) 
         login_box = driver.find_element(By.ID, 'clearPass')
-        login_box.send_keys('physician')
+        login_box.send_keys(password_user)
         time.sleep(1) 
         select_language = Select(driver.find_element(By.CSS_SELECTOR, 'select[name=languageChoice]'))
         select_language.select_by_value('1') # Value '1' = English (Standard)
@@ -103,22 +188,10 @@ def main():
         login_box.submit()
 
         for index in random.sample(range(1, len(patients)), patients_to_register):
-            print(index)
+            print(index + 2)
             patient = format_patient_info(patients.loc[index])
             register_patient_openemr(driver, patient)
-
-        # Despues de registrar a los pacientes, se abre la lista de todos los pacientes.
-        # Click en Patient.
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div"))).click()
-        time.sleep(1)
-        # Click en New/Search.
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='mainMenu']/div/div[6]/div/ul/li[1]/div"))).click()    
-        time.sleep(3) 
-        # Entramos al Iframe de la ultima pestaña abierta (3ra): Search or Add patient.
-        WebDriverWait(driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, "//*[@id='framesDisplay']/div[3]/iframe")))
-        time.sleep(3) 
-        # Click al boton Search.
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "search"))).click()
+            register_vitals_patient(driver, patient)
 
         time.sleep(10) 
     finally:
