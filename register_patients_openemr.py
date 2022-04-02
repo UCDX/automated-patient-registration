@@ -161,15 +161,16 @@ def register_vitals_patient(driver, patient):
     register_vitals_box = driver.find_element(By.ID, 'temperature_input_metric')
     register_vitals_box.send_keys(str(patient.temperature))
     time.sleep(2)
-    register_vitals_box = driver.find_element(By.ID, 'BMI_input')
-    register_vitals_box.send_keys(str(patient.bmi))
-    time.sleep(3) 
+    # register_vitals_box = driver.find_element(By.ID, 'BMI_input')
+    # register_vitals_box.send_keys(str(patient.bmi))
+    # time.sleep(3) 
     register_vitals_box.submit()
 
     # -------------- Fin de registro de signos vitales del paciente. -----------------------
 
     # Regresamos al html raiz.
     driver.switch_to.default_content()
+    time.sleep(3)
 
 def main():
     # Nota: Se usa la demo b, para evitar que algunos XPATH no se encuentren en caso de que en 
@@ -178,10 +179,16 @@ def main():
     patients_to_register = 3
     user = 'physician'
     password_user = 'physician'
+    path_to_chromedriver = '' # Dejar en '' si está en el path. # 'D:\\Programs\\chromedriver_win32\\chromedriver.exe'
     patients = pd.read_csv('random_patients.csv', encoding='latin-1')
 
     try:
-        s=Service('D:\\Programs\\chromedriver_win32\\chromedriver.exe')
+        s = None
+        if path_to_chromedriver != '' and path_to_chromedriver is not None:
+            s=Service(path_to_chromedriver)
+        else:
+            s=Service()
+        
         driver = webdriver.Chrome(service=s)
         driver.maximize_window()
         driver.get(url)
