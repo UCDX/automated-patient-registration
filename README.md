@@ -2,6 +2,15 @@
 
 Script que toma los datos de un archivo csv, el cual contiene información de 1000 pacientes generados aleatorimente, y registra estos datos (de 3 pacientes escogidos al azar) de manera automatizada (utilizando Selenium) a la **demo B** de [Open EMR](https://demo.openemr.io/b/openemr/interface/login/login.php?site=default).
 
+## Integrantes del equipo
+
+* Maldonado Aguilar Angel Julian.
+* Montejo Lopez Axel Alexis.
+
+## Enlace a video de script en funcionamiento
+
+https://drive.google.com/file/d/1-mY9pvHzL9_EF-zDDRKWT_Qfvkh5L8BH/view?usp=sharing
+
 ## Variables de configuración
 
 * `path_to_chromedriver`
@@ -26,8 +35,3 @@ Contraseña del usuario.
 * `url`
 
 URL del sitio donde está hosteado OpenEMR. Se usa la demo b, y se sugiere no cambiar, para evitar que algunos XPATH no se encuentren en caso de que en la demo original el admin configure apartados del sistema.
-
-## Integrantes del equipo
-
-* Maldonado Aguilar Angel Julian.
-* Montejo Lopez Axel Alexis.
